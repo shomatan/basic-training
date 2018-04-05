@@ -5,6 +5,8 @@ int my_write(char c) {
     return write(1, &c, 1);
 }
 
+// print the number using only my_write
+// read ascii table to convert digit to character
 void my_putnbr(int c) {
     
     const int ASCII_ORIGIN = 48;
@@ -26,8 +28,6 @@ void my_putnbr(int c) {
             reverse = reverse / 10;
         }
     }
-    // print the number using only my_write
-    // read ascii table to convert digit to character
 }
 
 int main(void) {
