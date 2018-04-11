@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int count_words(char *sentence) {
+int my_count_words(char *sentence) {
 
     const char SKIP_CHAR = ' ';
 
@@ -29,9 +29,9 @@ int count_words(char *sentence) {
 }
 
 int main() {
-    printf("%d\n", count_words("")); // 0
-    printf("%d\n", count_words("Hello")); // 1
-    printf("%d\n", count_words("Hello    world blabla")); // 3
-    printf("%d\n", count_words("   My name is    Mr. Scala  ")); // 5
+    printf("%d\n", my_count_words("")); // 0
+    printf("%d\n", my_count_words("Hello")); // 1
+    printf("%d\n", my_count_words("Hello    world blabla")); // 3
+    printf("%d\n", my_count_words("   My name is    Mr. Scala  ")); // 5
     return 0;
 }
