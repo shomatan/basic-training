@@ -8,7 +8,7 @@ int my_count_words(char *sentence) {
     int length = 0;
     int count = 0;
     char previousChar = SKIP_CHAR;
-    char current = NULL;
+    char current = '\0';
     
     while(sentence[length] != '\0') {
         current = sentence[length];
@@ -35,7 +35,10 @@ int *words_length(char *str) {
 
     int *result = malloc(my_count_words(str) * sizeof(int));
     
-    char current = NULL;
+    if (result == NULL)
+        return NULL;
+    
+    char current = '\0';
     int length = 0;
     int wordCount = 0;
     int resultIndex = 0;
@@ -69,4 +72,5 @@ int main(void){
         printf("%d\n", result1[i]);
     } 
     
+    free(result1);
 }
