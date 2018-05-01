@@ -1,73 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct List {
-    int value;
-    struct List *next;
-};
+int my_count_words(char *sentence) {
 
-struct List *last(struct List *list) {
-    if (list == NULL)
-        return NULL;
-        
-    struct List *item = list;
-    
-    while (item->next) {
-        item = item->next;
-    }
-    return item;
-}
+    const char SKIP_CHAR = ' ';
 
-struct List *append(struct List *list, int value) {
-    struct List *newElem = malloc(sizeof(*list));
+    int length = 0;
+    int count = 0;
+    char previousChar = SKIP_CHAR;
+    char current = NULL;
     
-    newElem->value = value;
-    newElem->next = NULL;
-    if (list == NULL) {
-        return newElem;
+    while(sentence[length] != '\0') {
+        current = sentence[length];
+        if (current == SKIP_CHAR && sentence[length] != previousChar) {
+            count++;
+        }
+        previousChar = current;
+        length++;
     }
     
-    struct List *lastItem = last(list);
-    
-    if (lastItem == NULL) {
-        list->next = newElem;
-        return list;
+    if (length == 0) {
+        return 0;  
+    } else if (current != SKIP_CHAR) {
+        return count + 1;
+    } else {
+        return count;
     }
-    
-    lastItem->next = newElem;
-    return list;
-}
-
-int count(struct List *list) {
-    if (list == NULL)
-        return 0;
-        
-    struct List *item = list;
-    int count = 1;
-    
-    while (item->next) {
-        item = item->next;
-        count++;
-    }
-    return count;
+   
 }
 
 int *words_length(char *str) {
     
     const char SKIP_CHAR = ' ';
 
+    int *result = malloc(my_count_words(str) * sizeof(int));
+    
+    char current = NULL;
     int length = 0;
     int wordCount = 0;
-    char current = NULL;
-    struct List *lengthList = NULL;
-    
+    int resultIndex = 0;
+
     while(str[length] != '\0') {
         current = str[length];
         if (current == SKIP_CHAR) {
-            if (count > 0) {
-                lengthList = append(lengthList, wordCount);
+            if (wordCount > 0) {
+                result[resultIndex] = wordCount;
             }
             wordCount = 0;
+            resultIndex++;
         } else {
             wordCount++;
         }
@@ -75,36 +55,18 @@ int *words_length(char *str) {
     }
     
     if (wordCount > 0) {
-        lengthList = append(lengthList, wordCount);
+        result[resultIndex] = wordCount;
     }
     
-    int listCount = count(lengthList);
-    
-    if (listCount > 0) {
-        int *result = malloc(listCount * sizeof(int));
-        struct List *item = lengthList;
-        struct List *temp = NULL;
-        int i = 0;
-        
-        while(item) {
-            result[i] = item->value;
-            temp = item;
-            item = item->next;
-            free(temp);
-            i++;
-        } 
-        return result;
-    } else {
-        return NULL;
-    }
+    return result;
 }
 
 int main(void){
     
-    int *result = words_length("Hello world in C"); // return [5, 5, 2, 1]
+    int *result1 = words_length("Hello world in C"); // return [5, 5, 2, 1]
     
     for (int i = 0; i < 4; i++) {
-        printf("%d\n", result[i]);
+        printf("%d\n", result1[i]);
     } 
     
 }
