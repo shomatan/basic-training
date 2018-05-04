@@ -1,9 +1,7 @@
 #include <stdio.h>
 
 int my_count_words(char *sentence) {
-
     const char SKIP_CHAR = ' ';
-
     int length = 0;
     int count = 0;
     char previousChar = SKIP_CHAR;
@@ -17,7 +15,6 @@ int my_count_words(char *sentence) {
         previousChar = current;
         length++;
     }
-    
     if (length == 0) {
         return 0;  
     } else if (current != SKIP_CHAR) {
@@ -25,7 +22,6 @@ int my_count_words(char *sentence) {
     } else {
         return count;
     }
-   
 }
 
 int main() {
