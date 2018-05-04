@@ -5,7 +5,7 @@ int my_count_words(char *sentence) {
     int length = 0;
     int count = 0;
     char previousChar = SKIP_CHAR;
-    char current = NULL;
+    char current = '\0';
     
     while(sentence[length] != '\0') {
         current = sentence[length];
