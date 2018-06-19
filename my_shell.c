@@ -1,43 +1,116 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
 
 #define MAX_INPUT_CHAR_LENGTH 128
 
+// basic shell
+// readline -> execute command with args or builtin function in a separate process
+
+// builtin function
+// setenv/unsetenv/env/cd
+
+// man <cmd> for more information
+// fork/vfork
+// execve
+// chdir
+// calloc/malloc/free
+// lstat/stat
+
+// 1. step 
+// readline -> execute command using execve and fork
+
+// 2.
+// setenv/unsetenv/env
+//
+
+// 3.
+// cd using chdir
+// cd 
+// cd /vsv 
+// cd ./vdfvs 
+// cd toto cd ../
+// cd -
+
+/*
+start point
+int main(int ac, char **av, char **env) {
+
+}
+*/
+
+
+//signal
+//exit
+//read/write
+//fork/vfork
+//execve
+//chdir
+//stat/lstat
+//malloc/free/calloc
+int my_strlen(char *str) {
+  int len = 0;
+  while (str[len])
+    len++;
+  return len;
+}
+
+int my_puts(char *str) {
+  return write(1, str, my_strlen(str));
+}
+
+void catch_signal(int ignored) {
+  my_puts("catch signal");
+}
+
+int my_index_of(char find, char *str) {
+  int index = 0;
+
+  while(str) {
+    if (str[index] == find)
+      return index;
+  }
+  return -1;
+}
+// dfbdfbdfbdfsbbnfaionbofinbiofnbofsnboisfnbnfbonsfoibns\ndvvsvbdfbfdbsdbbdfbs\n
+// dfbdfbdfbdfsbbnfaionbofinbiofnbofsnboisfnbnfbonsfoibns\n
+// 
 char *read_line(void) {
-  char temp[MAX_INPUT_CHAR_LENGTH];
-  char c = '\0';
-  int position = 0;
+  static char buffer[1024];
+  static int position = 0;
+  int length = 0;
+  // char *result = malloc(sizeof(char) * length + 1);
 
-  while(c != '\n') {
-    if (position == MAX_INPUT_CHAR_LENGTH) {
-      printf("Max size error");
+  if (buffer[0] == '\0') {
+    length = read(0, buffer, 1024);
+    if (length == 0)
       return NULL;
-    }
-    c = getchar();
-    temp[position++] = c;
+    if (length < 0)
+      return NULL;
   }
 
-  char *line = malloc(sizeof(char) * position + 1);
-
-  if (line == NULL) {
-    printf("Memory allocation error");
-    return NULL;
+  whle (my_index_of('\n', buffer) == -1) {
+    // no newline
   }
-  for(int i = 0; i < position; i++)
-    line[i] = temp[i];
-  line[position] = '\0';
-  return line;
+  
+  // while (buffer[0] == '\0') {
+
+  // }
+
+  return ;
 }
 
 int main() {
   int status = 0;
-  char *line = NULL;
+  // char *line = NULL;
 
+  // signal(2, &catch_signal);
   while(status == 0) {
-    printf("> ");
-    line = read_line();
-    if (line == NULL)
-      return 1;
+    my_puts("> ");
+    // sample();
+    read_line();
+    // split command, args
+    // exec
   }
   return status;
 }
