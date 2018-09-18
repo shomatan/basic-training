@@ -39,6 +39,8 @@ add | sub | div | mod | mul | rshift | lshift | cmp | pop
 - [x] add
 - [x] sub
 - [x] div
+- [x] mul 
+- [x] jmp 
  
 jmp:
  - mode:address
@@ -64,6 +66,11 @@ push:
 
 print_stack
   - optional count
+  
+cmp:
+ compare two operand in the stack
+ 
+ result: -1(low) 0(equal) 1(high)
 
 Example:
 

@@ -1,5 +1,3 @@
-import Instruction.Instruction
-
 import scala.collection.immutable.HashMap
 import scala.io.Source
 import scala.util.Try
@@ -10,8 +8,11 @@ case object SyntaxError extends VMError
 case class UnknownInstructionError(instruction: String) extends VMError
 case object RuntimeError extends VMError
 case class NotEnoughArgument(require: Int) extends VMError
+case class InvalidArgument(expected: String) extends VMError
 case class InvalidType(type1: OperandType, type2: OperandType) extends VMError
 
+// need ?
+case class Stack2[A](first: A, second: A, newStack: List[A])
 
 object Stack {
   def pop[A](stack: List[A]): (A, List[A]) = {
@@ -34,72 +35,93 @@ object Stack {
   }
 }
 
-object Instruction {
+case class ProgramContext(stack: List[Operand], cursor: Int) {
+  def next(stack: List[Operand], cursor: Int): ProgramContext =
+    copy(stack = stack, cursor = cursor)
+}
 
-  type Instruction = List[Operand] => Either[VMError, List[Operand]]
+object Instruction {
+  type Cursor = Int
+
+  type Instruction = ProgramContext => Either[VMError, ProgramContext]
 
   def add(): Instruction =
-    stack =>
-      if (stack.length >= 2) {
-        val (first, second, newStack) = Stack.pop2(stack)
-        if (first.`type` != second.`type`)
-          Left(NotEnoughArgument(2))
-        else {
-          for {
-            result <- first + second
-            next = result :: newStack
-          } yield next
-        }
+    ctx =>
+      if (ctx.stack.length >= 2) {
+        val (first, second, newStack) = Stack.pop2(ctx.stack)
+        for {
+          result <- first + second
+          stackResult = result :: newStack
+        } yield ctx.next(stackResult, ctx.cursor + 1)
       } else
         Left(NotEnoughArgument(2))
 
   def sub(): Instruction =
-    stack =>
-      if (stack.length >= 2) {
-        val (first, second, newStack) = Stack.pop2(stack)
-        if (first.`type` != second.`type`)
-          Left(NotEnoughArgument(2))
-        else {
-          for {
-            result <- first - second
-            next = result :: newStack
-          } yield next
-        }
+    ctx =>
+      if (ctx.stack.length >= 2) {
+        val (first, second, newStack) = Stack.pop2(ctx.stack)
+        for {
+          result <- first - second
+          stackResult = result :: newStack
+        } yield ctx.next(stackResult, ctx.cursor + 1)
       } else
         Left(NotEnoughArgument(2))
 
   def div(): Instruction =
-    stack =>
-      if (stack.length >= 2) {
-        val (first, second, newStack) = Stack.pop2(stack)
-        if (first.`type` != second.`type`)
-          Left(NotEnoughArgument(2))
-        else {
-          for {
-            result <- first / second
-            next = result :: newStack
-          } yield next
-        }
+    ctx =>
+      if (ctx.stack.length >= 2) {
+        val (first, second, newStack) = Stack.pop2(ctx.stack)
+        for {
+          result <- first / second
+          stackResult = result :: newStack
+        } yield ctx.next(stackResult, ctx.cursor + 1)
       } else
         Left(NotEnoughArgument(2))
 
+  def mul(): Instruction =
+    ctx =>
+      if (ctx.stack.length >= 2) {
+        val (first, second, newStack) = Stack.pop2(ctx.stack)
+        for {
+          result <- first * second
+          stackResult = result :: newStack
+        } yield ctx.next(stackResult, ctx.cursor + 1)
+      }
+      else
+        Left(NotEnoughArgument(2))
+
   def push(operand: Operand): Instruction =
-    stack =>
-      Right(operand :: stack)
+    ctx =>
+      Right(ctx.next(operand :: ctx.stack, ctx.cursor + 1))
 
   def printStack(): Instruction =
-    stack => {
+    ctx => {
       println("==============")
-      stack.foreach(println)
+      ctx.stack.foreach(println)
       println("=============")
       println()
-      Right(stack)
+      Right(ctx.next(ctx.stack, ctx.cursor + 1))
     }
+
+  def jump(address: Address): Instruction =
+    ctx =>
+      address.mode match {
+        case Absolute =>
+          Right(ctx.next(ctx.stack, address.cursor))
+        case _ =>
+          Left(UnknownInstructionError("relative not supported yet"))
+      }
 }
 
 sealed trait OperandType
 case object IntegerType extends OperandType
 case object FloatType extends OperandType
+
+sealed trait AddressMode
+case object Absolute extends AddressMode
+case object Relative extends AddressMode
+
+case class Address(mode: AddressMode, cursor: Int)
 
 sealed trait Operand {
   type Value
@@ -109,6 +131,7 @@ sealed trait Operand {
   protected  def withTypeGuard(roperand: Operand, f: (Value, Value) => Value): Either[VMError, Operand]
   def +(roperand: Operand): Either[VMError, Operand]
   def -(roperand: Operand): Either[VMError, Operand]
+  def *(roperand: Operand): Either[VMError, Operand]
   def /(roperand: Operand): Either[VMError, Operand]
 }
 case class IntOperand(override val value: Int) extends Operand {
@@ -130,6 +153,9 @@ case class IntOperand(override val value: Int) extends Operand {
 
   def -(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, minus)
+
+  def *(roperand: Operand): Either[VMError, Operand] =
+    withTypeGuard(roperand, times)
 
   def /(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, quot)
@@ -155,6 +181,9 @@ case class FloatOperand(value: Float) extends Operand {
   def -(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, minus)
 
+  def *(roperand: Operand): Either[VMError, Operand] =
+    withTypeGuard(roperand, times)
+
   def /(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, div)
 }
@@ -175,9 +204,31 @@ object ProgramParser {
     "add" -> parseAdd,
     "sub" -> parseSub,
     "div" -> parseDiv,
+    "mul" -> parseMul,
+    "jmp" -> parseJump,
     "print_stack" -> parsePrintStack
 //    "fork" -> parseFork
   )
+
+  private[this] def parseJump(args: Seq[String]): ParseResult = {
+    // abs:1 <- args(0)
+    if (args.isEmpty)
+      Left(NotEnoughArgument(1))
+    else {
+      val addressString = args(0).split(":")
+      for {
+        mode <-  addressString(0) match {
+          case "abs" => Right(Absolute)
+          case "rel" => Right(Relative)
+          case _ => Left(InvalidArgument("abs|rel"))
+        }
+        cursor <- Try(addressString(1).toInt).map(c => Right(c)).getOrElse(Left(ParsingError))
+      } yield jump(Address(mode, cursor))
+    }
+  }
+
+
+
 
   private[this] def parsePrintStack(args: Seq[String]): ParseResult =
     Right(printStack())
@@ -193,6 +244,9 @@ object ProgramParser {
 
   private[this] def parseDiv(args: Seq[String]): ParseResult =
     Right(div())
+
+  private[this] def parseMul(args: Seq[String]): ParseResult =
+    Right(mul())
 
   //private[this] def parseFork(args: Seq[String]): ParseResult =
     //Right(Fork)
@@ -225,26 +279,6 @@ object ProgramParser {
 }
 
 
-object ProgramInterpreter {
-
-  type Program = Seq[Instruction]
-
-  def run(program: Program): List[Operand] = {
-
-    program.foldLeft(List.empty[Operand]) {
-      case (stack, instruction) =>
-        instruction(stack).fold(
-          error => {
-            println(error)
-            stack
-          },
-          newStack => newStack
-        )
-    }
-  }
-}
-
-
 object Main {
 
   def main(args: Array[String]): Unit = {
@@ -258,7 +292,7 @@ object Main {
       error =>
         println(error),
       instructions => {
-        ProgramInterpreter.run(instructions)
+        ProgramInterpreter.run(instructions.toIndexedSeq)
         println("Finished")
       }
     )

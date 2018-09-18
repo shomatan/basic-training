@@ -3,3 +3,9 @@ print_stack
 push 'c'
 add
 print_stack
+push 100
+push 10
+print_stack
+mul
+print_stack
+jmp abs:1
