@@ -1,0 +1,5 @@
+push 42
+print_stack
+push 'c'
+add
+print_stack

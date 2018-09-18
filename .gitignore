@@ -1,1 +1,7 @@
 *.out*
+
+### IDE Specific
+.idea
+
+### Scala Specific
+target
