@@ -1,3 +1,5 @@
+import java.awt.peer.LightweightPeer
+
 import scala.collection.immutable.HashMap
 import scala.io.Source
 import scala.util.Try
@@ -11,29 +13,6 @@ case class NotEnoughArgument(require: Int) extends VMError
 case class InvalidArgument(expected: String) extends VMError
 case class InvalidType(type1: OperandType, type2: OperandType) extends VMError
 
-// need ?
-case class Stack2[A](first: A, second: A, newStack: List[A])
-
-object Stack {
-  def pop[A](stack: List[A]): (A, List[A]) = {
-    if (stack.isEmpty) {
-      throw new RuntimeException("Empty stack")
-    } else {
-      val value = stack.head
-      (value, stack.tail)
-    }
-  }
-
-  def pop2[A](stack: List[A]): (A, A, List[A]) = {
-    if (stack.length < 2) {
-      throw new RuntimeException("Empty stack")
-    } else {
-      val value = stack.head
-      val value2 = stack.tail.head
-      (value, value2, stack.tail.tail)
-    }
-  }
-}
 
 case class ProgramContext(stack: List[Operand], cursor: Int) {
   def next(stack: List[Operand], cursor: Int): ProgramContext =
@@ -90,6 +69,15 @@ object Instruction {
       else
         Left(NotEnoughArgument(2))
 
+//  def cmp(): Instruction =
+//    ctx =>
+//      if (ctx.stack.length >=2) {
+//        val (first, second, newStack) = Stack.pop2(ctx.stack)
+//        for {
+//          result <- if (first == second)
+//        }
+//      }
+
   def push(operand: Operand): Instruction =
     ctx =>
       Right(ctx.next(operand :: ctx.stack, ctx.cursor + 1))
@@ -133,6 +121,7 @@ sealed trait Operand {
   def -(roperand: Operand): Either[VMError, Operand]
   def *(roperand: Operand): Either[VMError, Operand]
   def /(roperand: Operand): Either[VMError, Operand]
+  //def <=(roperand: Operand): Either[VMError, Operand]
 }
 case class IntOperand(override val value: Int) extends Operand {
   type Value = Int
@@ -159,6 +148,9 @@ case class IntOperand(override val value: Int) extends Operand {
 
   def /(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, quot)
+
+  /*def <=(roperand: Operand): Either[VMError, Operand] =
+    withTypeGuard(roperand, )*/
 
 }
 case class FloatOperand(value: Float) extends Operand {
@@ -206,9 +198,15 @@ object ProgramParser {
     "div" -> parseDiv,
     "mul" -> parseMul,
     "jmp" -> parseJump,
-    "print_stack" -> parsePrintStack
+    "print_stack" -> parsePrintStack,
+    "cmp" -> parseCompare
 //    "fork" -> parseFork
   )
+
+  private[this] def parseCompare(args: Seq[String]): ParseResult = {
+
+    ???
+  }
 
   private[this] def parseJump(args: Seq[String]): ParseResult = {
     // abs:1 <- args(0)

@@ -1,4 +1,4 @@
-Stack Machine
+# Stack Machine
 
 Stack 1
 1
@@ -25,7 +25,7 @@ Stack 4
 0 <- 5 - 5
 3
 
-Language:
+## Language:
 
 Terms: instruction
 
@@ -72,8 +72,9 @@ cmp:
  
  result: -1(low) 0(equal) 1(high)
 
-Example:
+## Example:
 
+```
 push 2
 push 3
 push 'c'
@@ -102,3 +103,4 @@ push 1
 push 2
 cmp
 je -1 rel:-3
+```
