@@ -22,17 +22,18 @@
   },
   "dependencies": {
     "@types/fastclick": "^1.0.28",
+    "axios": "^0.18.0",
     "fastclick": "^1.0.6",
     "font-awesome": "^4.7.0",
     "font-awesome-webpack": "0.0.5-beta.2",
+    "functools-ts": "^0.0.13",
     "lodash": "^4.17.5",
     "moize": "^4.0.3",
+    "monocle-ts": "^1.2.0",
     "normalize.css": "^7.0.0",
     "react-fastclick": "^3.0.2",
     "react-tappable": "^1.0.2",
-    "react-tooling": "^0.22.0",
-    "monocle-ts": "^1.2.0",
-    "functools-ts": "^0.0.13"
+    "react-tooling": "^0.22.0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.0",
