@@ -19,3 +19,14 @@ export const AxiosClient = (): Client => ({
     axios.default.post<any>(url, data, config)
       .then(response => response.data)
 })
+
+export const FaKeClient = (): Client => ({
+  get: (url: string): Promise<any> =>
+    new Promise(function(resolve, reject){
+      resolve({name: "shoma"})
+    }),
+  post: (url: string, data: any): Promise<any> =>
+    new Promise(function(resolve, reject){
+      resolve(url)
+    })
+})

@@ -7,7 +7,7 @@ import {
   Failed
 } from "functools-ts"
 import { Dispatcher, React } from "react-tooling"
-import { AxiosClient } from "client"
+import { FaKeClient } from "client"
 
 interface User {
   name: string
@@ -30,7 +30,7 @@ const startLoading = (state: State): State => ({
 })
 
 const getUser = async (_: State): Promise<F1<State, State>> => {
-  const user = await AxiosClient().get("https://google.com")
+  const user = await FaKeClient().get("https://google.com")
     .then(user => Loaded(user))
     .catch((err: Error) => Failed(err) as RemoteData<Error, User>)
 
