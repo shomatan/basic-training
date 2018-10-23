@@ -69,14 +69,16 @@ object Instruction {
       else
         Left(NotEnoughArgument(2))
 
-//  def cmp(): Instruction =
-//    ctx =>
-//      if (ctx.stack.length >=2) {
-//        val (first, second, newStack) = Stack.pop2(ctx.stack)
-//        for {
-//          result <- if (first == second)
-//        }
-//      }
+  def cmp(): Instruction =
+    ctx =>
+      if (ctx.stack.length >= 2) {
+        val (first, second, newStack) = Stack.pop2(ctx.stack)
+        for {
+          result <- first.cmp(second)
+          stackResult = result :: newStack
+        } yield ctx.next(stackResult, ctx.cursor + 1)
+      } else
+        Left(NotEnoughArgument(2))
 
   def push(operand: Operand): Instruction =
     ctx =>
@@ -121,7 +123,8 @@ sealed trait Operand {
   def -(roperand: Operand): Either[VMError, Operand]
   def *(roperand: Operand): Either[VMError, Operand]
   def /(roperand: Operand): Either[VMError, Operand]
-  //def <=(roperand: Operand): Either[VMError, Operand]
+
+  def cmp(roperand: Operand): Either[VMError, Operand]
 }
 case class IntOperand(override val value: Int) extends Operand {
   type Value = Int
@@ -148,6 +151,13 @@ case class IntOperand(override val value: Int) extends Operand {
 
   def /(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, quot)
+
+  def cmp(roperand: Operand): Either[VMError, Operand] =
+    withTypeGuard(roperand, { (a, b) =>
+      if (a == b) 0
+      else if (a < b) -1
+      else 1
+    })
 
   /*def <=(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, )*/
@@ -178,6 +188,13 @@ case class FloatOperand(value: Float) extends Operand {
 
   def /(roperand: Operand): Either[VMError, Operand] =
     withTypeGuard(roperand, div)
+
+  def cmp(roperand: Operand): Either[VMError, Operand] =
+    withTypeGuard(roperand, { (a, b) =>
+      if (a == b) 0f
+      else if (a < b) -1f
+      else 1f
+    })
 }
 
 
@@ -203,10 +220,8 @@ object ProgramParser {
 //    "fork" -> parseFork
   )
 
-  private[this] def parseCompare(args: Seq[String]): ParseResult = {
-
-    ???
-  }
+  private[this] def parseCompare(args: Seq[String]): ParseResult =
+    Right(Instruction.cmp())
 
   private[this] def parseJump(args: Seq[String]): ParseResult = {
     // abs:1 <- args(0)
@@ -224,9 +239,6 @@ object ProgramParser {
       } yield jump(Address(mode, cursor))
     }
   }
-
-
-
 
   private[this] def parsePrintStack(args: Seq[String]): ParseResult =
     Right(printStack())

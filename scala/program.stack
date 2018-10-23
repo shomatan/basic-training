@@ -8,4 +8,9 @@ push 10
 print_stack
 mul
 print_stack
-jmp abs:1
+cmp
+print_stack
+je abs:4
+jne abs:1
+jgt abs:2
+jlt abs:3

@@ -1,5 +1,6 @@
 import java.time.ZonedDateTime
 
+/*
 import Result.Result
 import cats.Monad
 import cats.data.EitherT
@@ -74,3 +75,4 @@ object Tagless {
   val userService = new UserSevice(UserRepository, LogRepository)
   userService.signup("", "", "")
 }
+*/
