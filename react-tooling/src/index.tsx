@@ -25,14 +25,14 @@ const toUri = (route: Route): string => {
     case Home.type:
       return "";
     case SigninRoute.type:
-      return "sign-in";
+      return "signin";
   }
 }
 const fromUri = (uri: string): Route => {
   switch (uri) {
     case "":
       return Home;
-    case "sign-in":
+    case "signin":
       return SigninRoute;
     default:
       return Home;
@@ -57,9 +57,18 @@ const signinLens = Lens.fromProp<State, "signin">("signin")
 
 type ViewProps = State & RootDispatcher<State, Route>
 
+const loadFromStorage = (state: State): State => {
+  const value = localStorage.getItem("key")
+
+  return state
+}
+
 const View = ({ dispatch, setRoute, ...state }: ViewProps): JSX.Element => {
   switch (state.route.type) {
     case Home.type:
+      // Load from localstrage
+      // Check whether user is logged in
+      // If not, redirect to SignIn page
       return (
         <Profile.View
           {...state.profile}
