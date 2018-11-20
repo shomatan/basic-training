@@ -42,8 +42,8 @@ object Tree {
     }
   }
 
-  val maxInt = max2(_, Int.MinValue)
-  val maxFloat= max2(_, Float.MaxValue)
+  val maxInt = max2(_: Tree[Int], Int.MinValue)
+  val maxFloat= max2(_: Tree[Float], Float.MaxValue)
 
   def add[A](tree: Tree[A], value: A): Tree[A] = ???
 

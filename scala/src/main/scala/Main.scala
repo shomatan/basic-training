@@ -80,6 +80,27 @@ object Instruction {
       } else
         Left(NotEnoughArgument(2))
 
+  private def jumpIf(address: Address, cond: Int => Boolean): Instruction =
+    ctx =>
+      if (ctx.stack.nonEmpty) {
+        val (first, newStack) = Stack.pop(ctx.stack)
+
+        val cmpResult = first match {
+            case IntOperand(value) => value
+            case FloatOperand(value) => value.toInt
+        }
+        if (cond(cmpResult))
+          jump(address)(ctx)
+        else
+          Right(ctx.next(newStack, ctx.cursor + 1))
+      } else
+        Left(NotEnoughArgument(2))
+
+  val jumpEqual = jumpIf(_: Address, cmpResult => cmpResult == 0)
+  val jumpNotEqual = jumpIf(_: Address, cmpResult => cmpResult != 0)
+  val jumpGreater = jumpIf(_: Address, cmpResult => cmpResult > 0)
+  val jumpLower = jumpIf(_: Address, cmpResult => cmpResult < 0)
+
   def push(operand: Operand): Instruction =
     ctx =>
       Right(ctx.next(operand :: ctx.stack, ctx.cursor + 1))
@@ -98,8 +119,8 @@ object Instruction {
       address.mode match {
         case Absolute =>
           Right(ctx.next(ctx.stack, address.cursor))
-        case _ =>
-          Left(UnknownInstructionError("relative not supported yet"))
+        case Relative =>
+          Right(ctx.next(ctx.stack, ctx.cursor + address.cursor))
       }
 }
 
@@ -208,37 +229,47 @@ object ProgramParser {
 
   private val separator = " "
   private val addressSeparator = ","
-  val parsers: Parsers = HashMap(
-    "push" -> parsePush,
-    "add" -> parseAdd,
-    "sub" -> parseSub,
-    "div" -> parseDiv,
-    "mul" -> parseMul,
-    "jmp" -> parseJump,
-    "print_stack" -> parsePrintStack,
-    "cmp" -> parseCompare
-//    "fork" -> parseFork
-  )
+
+
+  private [this] def parseAddress(addressString: Seq[String]): Either[VMError, Address] =
+    for {
+      mode <-  addressString(0) match {
+        case "abs" => Right(Absolute)
+        case "rel" => Right(Relative)
+        case _ => Left(InvalidArgument("abs|rel"))
+      }
+      cursor <- Try(addressString(1).toInt).map(c => Right(c)).getOrElse(Left(ParsingError))
+    } yield Address(mode, cursor)
+
 
   private[this] def parseCompare(args: Seq[String]): ParseResult =
     Right(Instruction.cmp())
 
-  private[this] def parseJump(args: Seq[String]): ParseResult = {
+  private[this] def parseJumpEqual(args: Seq[String]): ParseResult =
+    if (args.isEmpty)
+      Left(NotEnoughArgument(1))
+    else {
+      val addressString = args(0).split(":")
+      parseAddress(addressString).map(address => jumpEqual(address))
+    }
+
+
+  private[this] def parseJumpIf(args: Seq[String], jumpInstruction: Address => Instruction): ParseResult = {
     // abs:1 <- args(0)
     if (args.isEmpty)
       Left(NotEnoughArgument(1))
     else {
       val addressString = args(0).split(":")
-      for {
-        mode <-  addressString(0) match {
-          case "abs" => Right(Absolute)
-          case "rel" => Right(Relative)
-          case _ => Left(InvalidArgument("abs|rel"))
-        }
-        cursor <- Try(addressString(1).toInt).map(c => Right(c)).getOrElse(Left(ParsingError))
-      } yield jump(Address(mode, cursor))
+      parseAddress(addressString).map(jumpInstruction)
     }
   }
+
+  private[this] val parseJump = parseJumpIf(_: Seq[String], address => jump(address))
+  private[this] val parseJumpEqual = parseJumpIf(_: Seq[String], address => jumpEqual(address))
+  private[this] val parseJumpNotEqual = parseJumpIf(_: Seq[String], address => jumpNotEqual(address))
+  private[this] val parseJumpGreater = parseJumpIf(_: Seq[String], address => jumpGreater(address))
+  private[this] val parseJumpLower = parseJumpIf(_: Seq[String], address => jumpLower(address))
+
 
   private[this] def parsePrintStack(args: Seq[String]): ParseResult =
     Right(printStack())
@@ -276,6 +307,22 @@ object ProgramParser {
       case s if s.charAt(0) == '\'' => parseAsciiCode(s)
       case s => parseInt(s)
     }
+
+  val parsers: Parsers = HashMap(
+    "push" -> parsePush,
+    "add" -> parseAdd,
+    "sub" -> parseSub,
+    "div" -> parseDiv,
+    "mul" -> parseMul,
+    "jmp" -> parseJump,
+    "print_stack" -> parsePrintStack,
+    "cmp" -> parseCompare,
+    "je" -> parseJumpEqual,
+    "jne" -> parseJumpNotEqual,
+    "jgt" -> parseJumpGreater,
+    "jlt" -> parseJumpLower
+    //    "fork" -> parseFork
+  )
 
   // push <2.5|2|'c'> => ["push", "2.5"]
   def parse(line: String): ParseResult = {
