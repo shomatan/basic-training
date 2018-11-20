@@ -1,3 +1,17 @@
+# Text editor
+
+## TODO
+1. Modeling in the code
+2. Parsing document json → document object
+3. Rendering
+4. Editing/Updating
+5. Basic Styles
+6. Grid support
+7. Export to PDF/ODT/HTML
+
+## Details
+
+### Modeling in the code
 Header
 Footer
 Title 1 – 6
@@ -79,10 +93,3 @@ Text tdonobevvsvavsdvsdvsdd bdfbd fbsbsnoinsdnvsdvds dsdsvsnionvsdo
 document object can be rendered in separated thread
 
 
-1. Modeling in the code
-2. Parsing document json → document object
-3. Rendering
-4. Editing/Updating
-5. Basic Styles
-6. Grid support
-7. Export to PDF/ODT/HTML
